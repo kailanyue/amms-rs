@@ -1,6 +1,6 @@
-use std::sync::Arc;
-
 use alloy::{primitives::address, providers::ProviderBuilder};
+use dotenv::dotenv;
+use std::{env, sync::Arc};
 
 use amms::{
     amm::{
@@ -12,10 +12,15 @@ use amms::{
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
+    dotenv().ok();
+
     tracing_subscriber::fmt::init();
 
+    let rpc_endpoint =
+        env::var("HTTPS_URL").unwrap_or_else(|_| "https://rpc.mevblocker.io".to_string());
+
     // Add rpc endpoint here:
-    let rpc_endpoint = std::env::var("ETHEREUM_RPC_ENDPOINT")?;
+    // let rpc_endpoint = env::var("ETHEREUM_RPC_ENDPOINT")?;
     let provider = Arc::new(ProviderBuilder::new().on_http(rpc_endpoint.parse()?));
 
     let factories = vec![
@@ -39,7 +44,8 @@ async fn main() -> eyre::Result<()> {
     ];
 
     // Sync pairs
-    sync::sync_amms(factories, provider, None, 500).await?;
+    let (amms, _last_synced_block) = sync::sync_amms(factories, provider, None, 500).await?;
 
+    println!("AMMs: {:?}", amms);
     Ok(())
 }

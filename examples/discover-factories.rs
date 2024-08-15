@@ -1,14 +1,17 @@
-use std::sync::Arc;
-
 use alloy::providers::ProviderBuilder;
-
 use amms::discovery::factory::{discover_factories, DiscoverableFactory};
+use dotenv::dotenv;
+use std::{env, sync::Arc};
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     tracing_subscriber::fmt::init();
 
-    let rpc_endpoint = std::env::var("ETHEREUM_RPC_ENDPOINT")?;
+    dotenv().ok();
+    let rpc_endpoint =
+        env::var("HTTPS_URL").unwrap_or_else(|_| "https://rpc.mevblocker.io".to_string());
+
+    // let rpc_endpoint = std::env::var("ETHEREUM_RPC_ENDPOINT")?;
     let provider = Arc::new(ProviderBuilder::new().on_http(rpc_endpoint.parse()?));
 
     // Find all UniswapV2 and UniswapV3 compatible factories and filter out matches with less than 1000 AMMs
